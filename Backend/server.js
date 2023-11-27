@@ -10,12 +10,16 @@ const helmet = require("helmet");
 const nodemailer = require("nodemailer");
 const port = process.env.PORT || 3000;
 const secretKey = process.env.SECRET_KEY;
+const cookieParser = require('cookie-parser');
+
+
 
 const app = express();
 
 app.use(express.json());
 app.use(cors());
 app.use(helmet());
+app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 
 // const connection = mysql.createConnection(process.env.DATABASE_URL);
@@ -64,7 +68,15 @@ if (connection) {
 }
 
 app.get("/index", verifyToken, (req, res) => {
-  res.send("Hello World");
+  const query = "SELECT id, username, email FROM users";
+  connection.query(query, (error, results) => {
+    if (error) {
+      console.error("Error querying database:", error);
+      res.status(500).json({ message: "Error querying database" });
+    } else {
+      res.json({ users: results });
+    }
+  });
 });
 
 
@@ -206,6 +218,8 @@ app.post('/reset-password/:token', async (req, res) => {
     res.status(400).json({ message: "Invalid or expired token" });
   }
 });
+
+
 
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
